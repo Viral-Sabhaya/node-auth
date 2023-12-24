@@ -39,8 +39,24 @@ const register = async (req, res) => {
     res.status(500).json(error.message)
   }
 }
-const login = (req, res) => {
-  res.send("sdjhfjsdhjfhsk")
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body
+    const existingUser = await AuthModel.findOne({ email: email })
+
+    if (!existingUser) {
+      return res.status(400).json({ message: "User not found" })
+    }
+    const matchPassword = await bcrypt.compare(password, existingUser.password)
+    if (!matchPassword) {
+      return res.status(400).json({ message: "Invalid credentials" })
+    }
+    const token = jwt.sign({ email: existingUser.emil, id: existingUser._id }, SECRET_KEY)
+    res.status(201).json({ user: existingUser, token: token, message: "Login successfully" })
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error.message)
+  }
 }
 
 export { register, login }
