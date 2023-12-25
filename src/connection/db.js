@@ -1,9 +1,5 @@
 import mongoose from "mongoose";
-import dotenv from 'dotenv'
-import express from 'express';
-dotenv.config()
-const DB_URL = process.env.DB_URL;
-
+import { DB_URL } from '../common/environment.js'
 const dbConnection = async () => {
   try {
     await mongoose.connect(DB_URL)
