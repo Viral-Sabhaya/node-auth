@@ -53,5 +53,13 @@ const login = async (req, res) => {
     res.status(500).send(error.message)
   }
 }
+const allUsers = async (req, res) => {
+  try {
+    const users = await UserModel.find({})
+    res.status(200).json(users)
+  } catch (error) {
+    console.log(error);
+  }
+}
 
-export { register, login }
+export { register, login, allUsers }
