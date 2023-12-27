@@ -91,7 +91,7 @@ const forgetPassword = async (req, res) => {
         useFindAndModify: false
       }
     )
-    res.status(201).json({ status: true, message: "Approval successfully" })
+    res.status(201).json({ status: true, message: "Password update successfully" })
 
   } catch (error) {
     console.log(error);
