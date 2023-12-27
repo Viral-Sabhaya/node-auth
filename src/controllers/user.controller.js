@@ -79,4 +79,24 @@ const allUsers = async (req, res) => {
   }
 }
 
-export { register, login, allUsers }
+const forgetPassword = async (req, res) => {
+
+}
+
+const statusUpdate = async (req, res) => {
+
+  const { role, id, approvalStatus } = req.body;
+
+  const updateDetails = await UserModel.findByIdAndUpdate(id, {
+    $set: { role: role, approvalStatus: approvalStatus }
+  },
+    {
+      new: true,
+      useFindAndModify: false
+    }
+  )
+
+  res.status(201).json({ status: true, message: "Approval successfully" })
+}
+
+export { register, login, allUsers, statusUpdate, forgetPassword }
