@@ -23,6 +23,10 @@ const userSchema = mongoose.Schema({
     type: String,
     require: true,
   },
+  approvalStatus: {
+    type: Boolean,
+    require: true,
+  },
 }, { timestamps: true })
 
 const UserModel = mongoose.model('User', userSchema)

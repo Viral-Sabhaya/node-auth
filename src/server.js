@@ -9,6 +9,6 @@ app.use("/", router)
 
 app.listen(PORT, async () => {
   console.log(`server listening on http://localhost:${PORT}`);
+  await dbConnection()
 })
 
-dbConnection()

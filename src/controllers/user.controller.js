@@ -3,9 +3,18 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { HASH_SALT, SECRET_KEY } from '../common/environment.js'
 
+function successResponse(statusCode, status, message, data) {
+  return {
+    statusCode,
+    status,
+    message,
+    data: json(data)
+  }
+}
+
 const register = async (req, res) => {
 
-  const { fullName, email, password, contactNumber, role } = req.body
+  const { fullName, email, password, contactNumber, role, approvalStatus } = req.body
   // Existing user check
   // Hash password
   // User creation
@@ -18,16 +27,15 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    const result = await UserModel.create({
+    const data = await UserModel.create({
       fullName: fullName,
       email: email,
       contactNumber: contactNumber,
       role: role,
       password: hashedPassword,
+      approvalStatus: approvalStatus
     })
-
-    const token = jwt.sign({ email: result.emil, id: result._id }, SECRET_KEY)
-    res.status(201).json({ user: result, token: token, message: "User crate successfully" })
+    res.status(201).json({ status: true, message: "User crate successfully", data })
 
   } catch (error) {
     console.log(error);
@@ -36,23 +44,32 @@ const register = async (req, res) => {
 }
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body
-    const existingUser = await UserModel.findOne({ email: email })
+    const { email, password } = req.body;
+    var data = await UserModel.findOne({ email: email });
 
-    if (!existingUser) {
-      return res.status(400).json({ message: "User not found" })
+    if (!data) {
+      return res.status(400).json({ message: "User not found" });
     }
-    const matchPassword = await bcrypt.compare(password, existingUser.password)
+
+    const matchPassword = await bcrypt.compare(password, data.password);
+
     if (!matchPassword) {
-      return res.status(400).json({ message: "Your userName and password incorrect!" })
+      return res.status(400).json({ message: "Your username and password are incorrect!" });
     }
-    const token = jwt.sign({ email: existingUser.emil, id: existingUser._id }, SECRET_KEY)
-    res.status(201).json({ user: existingUser, token: token, message: "Login successfully" })
+
+    const token = jwt.sign({ email: data.email, id: data._id }, SECRET_KEY);
+
+    return res.status(200).json({
+      status: true,
+      message: "Login successfully",
+      data: { ...data._doc, token: token }
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).send(error.message)
+    res.status(500).send(error.message);
   }
-}
+};
+
 const allUsers = async (req, res) => {
   try {
     const users = await UserModel.find({})
