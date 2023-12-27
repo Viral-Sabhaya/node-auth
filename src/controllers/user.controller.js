@@ -80,23 +80,45 @@ const allUsers = async (req, res) => {
 }
 
 const forgetPassword = async (req, res) => {
+  try {
+    const { id, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10)
+    await UserModel.findByIdAndUpdate(id, {
+      $set: { password: hashedPassword }
+    },
+      {
+        new: true,
+        useFindAndModify: false
+      }
+    )
+    res.status(201).json({ status: true, message: "Approval successfully" })
+
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message)
+  }
 
 }
 
 const statusUpdate = async (req, res) => {
 
-  const { role, id, approvalStatus } = req.body;
+  try {
+    const { role, id, approvalStatus } = req.body;
+    const updateDetails = await UserModel.findByIdAndUpdate(id, {
+      $set: { role: role, approvalStatus: approvalStatus }
+    },
+      {
+        new: true,
+        useFindAndModify: false
+      }
+    )
+    res.status(201).json({ status: true, message: "Approval successfully" })
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message)
+  }
 
-  const updateDetails = await UserModel.findByIdAndUpdate(id, {
-    $set: { role: role, approvalStatus: approvalStatus }
-  },
-    {
-      new: true,
-      useFindAndModify: false
-    }
-  )
 
-  res.status(201).json({ status: true, message: "Approval successfully" })
 }
 
 export { register, login, allUsers, statusUpdate, forgetPassword }
