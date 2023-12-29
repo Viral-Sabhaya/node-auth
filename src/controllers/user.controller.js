@@ -3,12 +3,10 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { HASH_SALT, SECRET_KEY } from '../common/environment.js'
 
-function successResponse(statusCode, status, message, data) {
+function successResponse(statusCode = 200, status, message, data) {
   return {
     statusCode,
-    status,
-    message,
-    data: json(data)
+    data: json.stringify({ status: status, message: message, data: data, code: statusCode })
   }
 }
 
@@ -42,6 +40,7 @@ const register = async (req, res) => {
     res.status(500).json(error.message)
   }
 }
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -79,7 +78,7 @@ const allUsers = async (req, res) => {
   }
 }
 
-const forgetPassword = async (req, res) => {
+const changePassword = async (req, res) => {
   try {
     const { id, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -121,4 +120,33 @@ const statusUpdate = async (req, res) => {
 
 }
 
-export { register, login, allUsers, statusUpdate, forgetPassword }
+const forgetPassword = async (req, res) => {
+
+  const { email, contactNumber, password, confirmPassword } = req.body
+
+  try {
+    const findUser = await UserModel.find({ "email": email, "contactNumber": contactNumber })
+
+    if (!findUser) {
+      return res.send(404).json({ status: "false", message: "User not found" })
+    }
+    const comparePassword = await bcrypt.compare(password, findUser[0].password)
+
+    if (!comparePassword) {
+      return res.status(404).json({ status: "false", message: "Password not match" })
+    }
+
+    const hashedPassword = await bcrypt.hash(confirmPassword, 10)
+    const forgetPass = await UserModel.findOneAndUpdate(
+      { email: email, contactNumber: contactNumber },
+      { password: hashedPassword },
+      { new: true }
+    )
+    return res.status(200).json({ status: "true", message: "Password update successfully!" })
+  } catch (error) {
+    console.log(error);
+  }
+
+}
+
+export { register, login, allUsers, statusUpdate, changePassword, forgetPassword }
