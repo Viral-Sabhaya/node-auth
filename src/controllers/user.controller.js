@@ -3,6 +3,19 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { HASH_SALT, SECRET_KEY } from '../common/environment.js'
 
+const findUser = async (id, res) => {
+  try {
+    const findUser = await UserModel.find({ _id: id })
+    if (findUser.length === 0) {
+      return res.status(404).send({ status: false, message: "User not found" })
+    }
+    return true
+
+  } catch (error) {
+    console.log("error:>", error);
+  }
+}
+
 const register = async (req, res) => {
 
   const { fullName, email, password, contactNumber, role } = req.body
@@ -74,36 +87,40 @@ const allUsers = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { id, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10)
-    const forgetPassword = await UserModel.findByIdAndUpdate(id, {
-      $set: { password: hashedPassword }
-    },
-      {
-        new: true,
-        useFindAndModify: false
-      }
-    )
-    res.status(200).json({ status: true, message: "Password update successfully" })
+    const user = await findUser(id, res)
+    if (user) {
+      const hashedPassword = await bcrypt.hash(password, 10)
+      const forgetPassword = await UserModel.findByIdAndUpdate(id, {
+        $set: { password: hashedPassword }
+      },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      )
+      res.status(200).json({ status: true, message: "Password update successfully" })
+    }
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message)
   }
-
 }
 
 const statusUpdate = async (req, res) => {
-
   try {
     const { role, id, approvalStatus } = req.body;
-    const updateDetails = await UserModel.findByIdAndUpdate(id, {
-      $set: { role: role, approvalStatus: approvalStatus }
-    },
-      {
-        new: true,
-        useFindAndModify: false
-      }
-    )
-    res.status(201).json({ status: true, message: "Approval successfully" })
+    const user = await findUser(id, res)
+    if (user) {
+      const updateDetails = await UserModel.findByIdAndUpdate(id, {
+        $set: { role: role, approvalStatus: approvalStatus }
+      },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      )
+      res.status(201).json({ status: true, message: "Approval successfully" })
+    }
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message)
@@ -117,12 +134,12 @@ const forgetPassword = async (req, res) => {
   const { email, contactNumber, password } = req.body
 
   try {
-    const findUser = await UserModel.find({ "email": email, "contactNumber": contactNumber })
+    const user = await UserModel.find({ "email": email, "contactNumber": contactNumber })
 
-    if (!findUser) {
+    if (!user) {
       return res.send(404).json({ status: false, message: "User not found" })
     }
-    const comparePassword = await bcrypt.compare(password, findUser[0].password)
+    const comparePassword = await bcrypt.compare(password, user[0].password)
 
     if (!comparePassword) {
       return res.status(404).json({ status: false, message: "Password not match" })
@@ -141,4 +158,26 @@ const forgetPassword = async (req, res) => {
 
 }
 
-export { register, login, allUsers, statusUpdate, changePassword, forgetPassword }
+const userUpdate = async (req, res) => {
+
+  try {
+    const { id, fullName, email, contactNumber } = req.body;
+    const user = await findUser(id, res)
+    if (user) {
+      const updateDetails = await UserModel.findByIdAndUpdate(id, {
+        $set: { fullName: fullName, email: email, contactNumber: contactNumber }
+      },
+        {
+          new: true,
+          useFindAndModify: false
+        }
+      )
+      res.status(200).send({ status: true, message: "User data update successfully", data: updateDetails })
+    }
+  } catch (error) {
+    console.log("Error:>", error);
+    res.status(400).send(error.message)
+  }
+}
+
+export { register, login, allUsers, statusUpdate, changePassword, forgetPassword, userUpdate }
