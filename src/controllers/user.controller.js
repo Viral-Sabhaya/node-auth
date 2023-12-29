@@ -3,16 +3,9 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { HASH_SALT, SECRET_KEY } from '../common/environment.js'
 
-function successResponse(statusCode = 200, status, message, data) {
-  return {
-    statusCode,
-    data: json.stringify({ status: status, message: message, data: data, code: statusCode })
-  }
-}
-
 const register = async (req, res) => {
 
-  const { fullName, email, password, contactNumber, role, approvalStatus } = req.body
+  const { fullName, email, password, contactNumber, role } = req.body
   // Existing user check
   // Hash password
   // User creation
@@ -20,7 +13,7 @@ const register = async (req, res) => {
   try {
     const existingUser = await UserModel.findOne({ email: email })
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" })
+      return res.status(400).json({ status: false, message: "User already exists" })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -31,7 +24,7 @@ const register = async (req, res) => {
       contactNumber: contactNumber,
       role: role,
       password: hashedPassword,
-      approvalStatus: approvalStatus
+      approvalStatus: false
     })
     res.status(201).json({ status: true, message: "User crate successfully", data })
 
@@ -47,13 +40,13 @@ const login = async (req, res) => {
     var data = await UserModel.findOne({ email: email });
 
     if (!data) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(400).json({ status: false, message: "User not found" });
     }
 
     const matchPassword = await bcrypt.compare(password, data.password);
 
     if (!matchPassword) {
-      return res.status(400).json({ message: "Your username and password are incorrect!" });
+      return res.status(400).json({ status: false, message: "Your username and password are incorrect!" });
     }
 
     const token = jwt.sign({ email: data.email, id: data._id }, SECRET_KEY);
@@ -72,7 +65,7 @@ const login = async (req, res) => {
 const allUsers = async (req, res) => {
   try {
     const users = await UserModel.find({})
-    res.status(200).json(users)
+    res.status(200).send({ code: 200, status: true, message: "Fetch all users successfully", data: users })
   } catch (error) {
     console.log(error);
   }
@@ -82,7 +75,7 @@ const changePassword = async (req, res) => {
   try {
     const { id, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10)
-    await UserModel.findByIdAndUpdate(id, {
+    const forgetPassword = await UserModel.findByIdAndUpdate(id, {
       $set: { password: hashedPassword }
     },
       {
@@ -90,8 +83,7 @@ const changePassword = async (req, res) => {
         useFindAndModify: false
       }
     )
-    res.status(201).json({ status: true, message: "Password update successfully" })
-
+    res.status(200).json({ status: true, message: "Password update successfully" })
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message)
@@ -122,27 +114,27 @@ const statusUpdate = async (req, res) => {
 
 const forgetPassword = async (req, res) => {
 
-  const { email, contactNumber, password, confirmPassword } = req.body
+  const { email, contactNumber, password } = req.body
 
   try {
     const findUser = await UserModel.find({ "email": email, "contactNumber": contactNumber })
 
     if (!findUser) {
-      return res.send(404).json({ status: "false", message: "User not found" })
+      return res.send(404).json({ status: false, message: "User not found" })
     }
     const comparePassword = await bcrypt.compare(password, findUser[0].password)
 
     if (!comparePassword) {
-      return res.status(404).json({ status: "false", message: "Password not match" })
+      return res.status(404).json({ status: false, message: "Password not match" })
     }
 
-    const hashedPassword = await bcrypt.hash(confirmPassword, 10)
+    const hashedPassword = await bcrypt.hash(password, 10)
     const forgetPass = await UserModel.findOneAndUpdate(
       { email: email, contactNumber: contactNumber },
       { password: hashedPassword },
       { new: true }
     )
-    return res.status(200).json({ status: "true", message: "Password update successfully!" })
+    return res.status(200).json({ status: true, message: "Password update successfully!" })
   } catch (error) {
     console.log(error);
   }
