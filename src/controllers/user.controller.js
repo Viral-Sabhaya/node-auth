@@ -86,20 +86,27 @@ const allUsers = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
-    const { id, password } = req.body;
-    const user = await findUser(id, res)
-    if (user) {
-      const hashedPassword = await bcrypt.hash(password, 10)
-      const forgetPassword = await UserModel.findByIdAndUpdate(id, {
-        $set: { password: hashedPassword }
-      },
-        {
-          new: true,
-          useFindAndModify: false
-        }
-      )
-      res.status(200).json({ status: true, message: "Password update successfully" })
+    const { id, password, newPassword } = req.body;
+    const user = await UserModel.find({ _id: id })
+    if (user.length === 0) {
+      return res.status(404).send({ status: false, message: "User not found" })
     }
+    const comparePassword = await bcrypt.compare(password, user[0].password)
+
+    if (!comparePassword) {
+      return res.status(404).json({ status: false, message: "Password not match" })
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await UserModel.findByIdAndUpdate(id, {
+      $set: { password: hashedPassword }
+    },
+      {
+        new: true,
+        useFindAndModify: false
+      }
+    )
+    res.status(200).json({ status: true, message: "Password update successfully" })
+
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message)
@@ -111,6 +118,7 @@ const statusUpdate = async (req, res) => {
     const { role, id, approvalStatus } = req.body;
     const user = await findUser(id, res)
     if (user) {
+
       const updateDetails = await UserModel.findByIdAndUpdate(id, {
         $set: { role: role, approvalStatus: approvalStatus }
       },
