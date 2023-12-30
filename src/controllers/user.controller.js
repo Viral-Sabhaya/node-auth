@@ -37,7 +37,7 @@ const register = async (req, res) => {
       contactNumber: contactNumber,
       role: role,
       password: hashedPassword,
-      approvalStatus: false
+      approvalStatus: "pending"
     })
     res.status(201).json({ status: true, message: "User crate successfully", data })
 
@@ -147,12 +147,6 @@ const forgetPassword = async (req, res) => {
     if (!user) {
       return res.send(404).json({ status: false, message: "User not found" })
     }
-    const comparePassword = await bcrypt.compare(password, user[0].password)
-
-    if (!comparePassword) {
-      return res.status(404).json({ status: false, message: "Password not match" })
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10)
     const forgetPass = await UserModel.findOneAndUpdate(
       { email: email, contactNumber: contactNumber },

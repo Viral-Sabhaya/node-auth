@@ -24,7 +24,7 @@ const userSchema = mongoose.Schema({
     require: true,
   },
   approvalStatus: {
-    type: Boolean,
+    type: String,
     require: true,
   },
 }, { timestamps: true })
