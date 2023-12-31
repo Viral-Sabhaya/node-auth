@@ -29,14 +29,14 @@ const register = async (req, res) => {
       return res.status(400).json({ status: false, message: "User already exists" })
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // const hashedPassword = await bcrypt.hash(password, 10)
 
     const data = await UserModel.create({
       fullName: fullName,
       email: email,
       contactNumber: contactNumber,
       role: role,
-      password: hashedPassword,
+      password: password,
       approvalStatus: "pending"
     })
     res.status(201).json({ status: true, message: "User crate successfully", data })
@@ -56,9 +56,9 @@ const login = async (req, res) => {
       return res.status(400).json({ status: false, message: "Your username and password are incorrect!" });
     }
 
-    const matchPassword = await bcrypt.compare(password, data.password);
+    // const matchPassword = await bcrypt.compare(password, data.password);
 
-    if (!matchPassword) {
+    if (password != data.password) {
       return res.status(400).json({ status: false, message: "Your username and password are incorrect!" });
     }
 
@@ -91,14 +91,14 @@ const changePassword = async (req, res) => {
     if (user.length === 0) {
       return res.status(404).send({ status: false, message: "User not found" })
     }
-    const comparePassword = await bcrypt.compare(password, user[0].password)
+    // const comparePassword = await bcrypt.compare(password, user[0].password)
 
-    if (!comparePassword) {
+    if (password != user.password) {
       return res.status(404).json({ status: false, message: "Password not match" })
     }
-    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    // const hashedPassword = await bcrypt.hash(newPassword, 10)
     await UserModel.findByIdAndUpdate(id, {
-      $set: { password: hashedPassword }
+      $set: { password: password }
     },
       {
         new: true,
@@ -143,14 +143,15 @@ const forgetPassword = async (req, res) => {
 
   try {
     const user = await UserModel.find({ "email": email, "contactNumber": contactNumber })
+    console.log("user:>", user);
 
     if (!user) {
       return res.send(404).json({ status: false, message: "User not found" })
     }
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // const hashedPassword = await bcrypt.hash(password, 10)
     const forgetPass = await UserModel.findOneAndUpdate(
       { email: email, contactNumber: contactNumber },
-      { password: hashedPassword },
+      { password: password },
       { new: true }
     )
     return res.status(200).json({ status: true, message: "Password update successfully!" })
