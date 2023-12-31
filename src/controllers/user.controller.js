@@ -87,8 +87,8 @@ const allUsers = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { id, password, newPassword } = req.body;
-    const user = await UserModel.find({ _id: id })
-    if (user.length === 0) {
+    const user = await UserModel.findById({ _id: id })
+    if (!user) {
       return res.status(404).send({ status: false, message: "User not found" })
     }
     // const comparePassword = await bcrypt.compare(password, user[0].password)
@@ -97,13 +97,10 @@ const changePassword = async (req, res) => {
       return res.status(404).json({ status: false, message: "Password not match" })
     }
     // const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await UserModel.findByIdAndUpdate(id, {
-      $set: { password: password }
+    const updatePassword = await UserModel.updateOne({ _id: id }, {
+      $set: { password: newPassword }
     },
-      {
-        new: true,
-        useFindAndModify: false
-      }
+      { $currentDate: { lastUpdated: true } }
     )
     res.status(200).json({ status: true, message: "Password update successfully" })
 
@@ -142,15 +139,14 @@ const forgetPassword = async (req, res) => {
   const { email, contactNumber, password } = req.body
 
   try {
-    const user = await UserModel.find({ "email": email, "contactNumber": contactNumber })
+    const user = await UserModel.findOne({ "email": email, "contactNumber": contactNumber })
     console.log("user:>", user);
 
     if (!user) {
-      return res.send(404).json({ status: false, message: "User not found" })
+      return res.status(404).json({ status: false, message: "User not found" })
     }
     // const hashedPassword = await bcrypt.hash(password, 10)
-    const forgetPass = await UserModel.findOneAndUpdate(
-      { email: email, contactNumber: contactNumber },
+    const forgetPass = await UserModel.findOneAndUpdate(user._id,
       { password: password },
       { new: true }
     )
