@@ -39,7 +39,10 @@ const register = async (req, res) => {
       password: password,
       approvalStatus: "pending"
     })
-    res.status(201).json({ status: true, message: "User crate successfully", data })
+
+    const token = jwt.sign({ email: data.email, id: data._id }, SECRET_KEY);
+    const user = { ...data._doc, token }
+    res.status(201).json({ status: true, message: "User crate successfully", user })
 
   } catch (error) {
     console.log(error);
@@ -130,8 +133,6 @@ const statusUpdate = async (req, res) => {
     console.log(error);
     res.status(400).send(error.message)
   }
-
-
 }
 
 const forgetPassword = async (req, res) => {
@@ -160,10 +161,10 @@ const forgetPassword = async (req, res) => {
 const userUpdate = async (req, res) => {
 
   try {
-    const { id, fullName, email, contactNumber } = req.body;
-    const user = await findUser(id, res)
+    const { fullName, email, contactNumber } = req.body;
+    const user = await findUser(req.userId, res)
     if (user) {
-      const updateDetails = await UserModel.findByIdAndUpdate(id, {
+      const updateDetails = await UserModel.findByIdAndUpdate(req.userId, {
         $set: { fullName: fullName, email: email, contactNumber: contactNumber }
       },
         {
