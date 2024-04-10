@@ -2,6 +2,7 @@ import UserModel from "../models/user.model.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { HASH_SALT, SECRET_KEY } from '../common/environment.js'
+import authSchema from "../validator/login.validator.js";
 
 const findUser = async (id, res) => {
   try {
@@ -50,7 +51,12 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    const { error, values } = authSchema(req.body)
+    if (error) {
+      return res.status(400).send({ message: [error.details[0].message][0] })
+    }
     const { email, password } = req.body;
+
     var data = await UserModel.findOne({ email: email });
 
     if (!data) {
