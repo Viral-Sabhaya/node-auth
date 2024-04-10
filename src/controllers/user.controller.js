@@ -28,9 +28,7 @@ const register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ status: false, message: "User already exists" })
     }
-
     // const hashedPassword = await bcrypt.hash(password, 10)
-
     const data = await UserModel.create({
       fullName: fullName,
       email: email,
@@ -42,11 +40,11 @@ const register = async (req, res) => {
 
     const token = jwt.sign({ email: data.email, id: data._id }, SECRET_KEY);
     const user = { ...data._doc, token }
-    res.status(201).json({ status: true, message: "User crate successfully", user })
+    return res.status(201).json({ status: true, message: "User crate successfully", user })
 
   } catch (error) {
     console.log(error);
-    res.status(500).json(error.message)
+    return res.status(500).json(error.message)
   }
 }
 
@@ -80,6 +78,7 @@ const login = async (req, res) => {
 
 const allUsers = async (req, res) => {
   try {
+    console.log(req.user);
     const users = await UserModel.find({})
     res.status(200).send({ code: 200, status: true, message: "Fetch all users successfully", data: users })
   } catch (error) {
